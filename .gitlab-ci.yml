@@ -4,6 +4,7 @@ before_script:
   - export DEBIAN_FRONTEND=noninteractive
   - apt-get -y update
   - apt-get -y install
+      build-essential
       libtool
       intltool
       libglib2.0-dev
@@ -24,7 +25,6 @@ before_script:
       libnemo-extension-dev
       libcaja-extension-dev
       libthunarx-3-dev
-      libpeony-extension-dev
 
 gtkhash:
   script:
@@ -43,7 +43,6 @@ gtkhash:
         --enable-nemo
         --enable-caja
         --enable-thunar
-        --enable-peony
         --disable-dependency-tracking
       )
     - ./configure ${DISTCHECK_CONFIGURE_FLAGS}
