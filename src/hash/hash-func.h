@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2007-2018 Tristan Heaven <tristan@tristanheaven.net>
+ *   Copyright (C) 2007-2020 Tristan Heaven <tristan@tristanheaven.net>
  *
  *   This file is part of GtkHash.
  *
@@ -26,7 +26,7 @@
 
 #include "digest-format.h"
 
-#define HASH_FUNCS_N (HASH_FUNC_ADLER32 + 1)
+#define HASH_FUNCS_N (HASH_FUNC_XXH64 + 1)
 #define HASH_FUNC_IS_VALID(X) (((X) >= 0) && ((X) < HASH_FUNCS_N))
 #define HASH_FUNC_IS_DEFAULT(X) ( \
 	(X) == HASH_FUNC_MD5 || \
@@ -65,17 +65,12 @@ enum hash_func_e {
 	HASH_FUNC_TIGER192,
 	HASH_FUNC_WHIRLPOOL,
 	HASH_FUNC_SM3,
-	HASH_FUNC_HAVAL128_3,
-	HASH_FUNC_HAVAL160_3,
-	HASH_FUNC_HAVAL192_3,
-	HASH_FUNC_HAVAL224_3,
-	HASH_FUNC_HAVAL256_3,
 	HASH_FUNC_GOST,
-	HASH_FUNC_SNEFRU128,
-	HASH_FUNC_SNEFRU256,
 	HASH_FUNC_MDC2,
 	HASH_FUNC_CRC32,
+	HASH_FUNC_CRC32C,
 	HASH_FUNC_ADLER32,
+	HASH_FUNC_XXH64,
 };
 
 struct hash_func_s {

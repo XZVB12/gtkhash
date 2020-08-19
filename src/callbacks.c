@@ -46,7 +46,7 @@ static bool on_window_delete_event(void)
 
 static void on_menuitem_open_activate(void)
 {
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	GtkFileChooser *chooser = GTK_FILE_CHOOSER(gtk_file_chooser_native_new(
 		_("Open Digest File"), gui.window, GTK_FILE_CHOOSER_ACTION_OPEN,
 		_("_Open"), _("_Cancel")));
@@ -70,7 +70,7 @@ static void on_menuitem_open_activate(void)
 
 	filter = gtk_file_filter_new();
 	gtk_file_filter_set_name(filter,
-		_("Digest/Checksum Files (*.sha1, *.md5, *.sfv, ...)"));
+		_("Digest/Checksum Files (*.sha1, *.md5, *.sfv, …)"));
 	check_file_add_filters(filter);
 	gtk_file_chooser_add_filter(chooser, filter);
 
@@ -80,7 +80,7 @@ static void on_menuitem_open_activate(void)
 	gtk_file_chooser_add_filter(chooser, filter);
 #endif
 
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	if (gtk_native_dialog_run(GTK_NATIVE_DIALOG(chooser)) == GTK_RESPONSE_ACCEPT) {
 #else
 	if (gtk_dialog_run(GTK_DIALOG(chooser)) == GTK_RESPONSE_ACCEPT) {
@@ -106,7 +106,7 @@ static void on_menuitem_open_activate(void)
 		g_slist_free_full(files, g_object_unref);
 	}
 
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	g_object_unref(chooser);
 #else
 	gtk_widget_destroy(GTK_WIDGET(chooser));
@@ -115,7 +115,7 @@ static void on_menuitem_open_activate(void)
 
 static void on_menuitem_save_as_activate(void)
 {
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	GtkFileChooser *chooser = GTK_FILE_CHOOSER(gtk_file_chooser_native_new(
 		_("Save Digest File"), gui.window, GTK_FILE_CHOOSER_ACTION_SAVE,
 		_("_Save"), _("_Cancel")));
@@ -132,7 +132,7 @@ static void on_menuitem_save_as_activate(void)
 	gtk_file_chooser_set_local_only(chooser, true); // TODO
 	gtk_file_chooser_set_do_overwrite_confirmation(chooser, true);
 
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	if (gtk_native_dialog_run(GTK_NATIVE_DIALOG(chooser)) == GTK_RESPONSE_ACCEPT) {
 #else
 	if (gtk_dialog_run(GTK_DIALOG(chooser)) == GTK_RESPONSE_ACCEPT) {
@@ -142,7 +142,7 @@ static void on_menuitem_save_as_activate(void)
 		g_free(filename);
 	}
 
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	g_object_unref(chooser);
 #else
 	gtk_widget_destroy(GTK_WIDGET(chooser));
@@ -243,12 +243,8 @@ static void on_radiomenuitem_toggled(void)
 		view = GUI_VIEW_FILE_LIST;
 	}
 
-	g_assert(GUI_VIEW_IS_VALID(view));
-
-	if (gui.view != view) {
-		gui.view = view;
-		gui_update();
-	}
+	gui_set_view(view);
+	gui_update();
 }
 
 static void on_menuitem_about_activate(void)
@@ -277,7 +273,7 @@ static void on_menuitem_about_activate(void)
 			"authors", authors,
 			"comments", _("A desktop utility for computing message digests or checksums"),
 			"license-type", GTK_LICENSE_GPL_2_0,
-			"logo-icon-name", PACKAGE,
+			"logo-icon-name", "org.gtkhash.gtkhash",
 			"program-name", PACKAGE_NAME,
 #if ENABLE_NLS
 			"translator-credits", _("translator-credits"),
@@ -306,7 +302,7 @@ static void on_filechooserbutton_selection_changed(void)
 
 static void on_toolbutton_add_clicked(void)
 {
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	GtkFileChooser *chooser = GTK_FILE_CHOOSER(gtk_file_chooser_native_new(
 		_("Select Files"), gui.window, GTK_FILE_CHOOSER_ACTION_OPEN,
 		_("_Open"), _("_Cancel")));
@@ -322,7 +318,7 @@ static void on_toolbutton_add_clicked(void)
 	gtk_file_chooser_set_select_multiple(chooser, true);
 	gtk_file_chooser_set_local_only(chooser, false);
 
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	if (gtk_native_dialog_run(GTK_NATIVE_DIALOG(chooser)) == GTK_RESPONSE_ACCEPT) {
 #else
 	if (gtk_dialog_run(GTK_DIALOG(chooser)) == GTK_RESPONSE_ACCEPT) {
@@ -336,7 +332,7 @@ static void on_toolbutton_add_clicked(void)
 		g_slist_free(uris);
 	}
 
-#if GTK_CHECK_VERSION(3,20,0)
+#if (GTK_CHECK_VERSION(3,20,0) && ENABLE_NATIVE_FILE_CHOOSER)
 	g_object_unref(chooser);
 #else
 	gtk_widget_destroy(GTK_WIDGET(chooser));
@@ -433,7 +429,8 @@ static void on_treeview_drag_data_received(G_GNUC_UNUSED GtkWidget *widget,
 	gtk_drag_finish(context, true, true, t);
 }
 
-static void on_menuitem_treeview_copy_activate(struct hash_func_s *func)
+static void on_menuitem_treeview_copy_activate(G_GNUC_UNUSED GtkMenuItem *menuitem,
+	struct hash_func_s *func)
 {
 	char *digest = list_get_selected_digest(func->id);
 	g_assert(digest);
@@ -451,14 +448,24 @@ static void on_menuitem_treeview_show_toolbar_toggled(void)
 	gtk_widget_set_visible(GTK_WIDGET(gui.toolbar), show_toolbar);
 }
 
-static void on_button_hash_clicked(void)
+static void on_button_hash_clicked(G_GNUC_UNUSED GtkButton *button,
+	struct hash_func_s *func)
 {
 	if (gui.view == GUI_VIEW_FILE) {
-		// XXX: Workaround for when user clicks Cancel in FileChooserDialog and
-		// XXX: uri is changed without emitting the "selection-changed" signal
+		// Workaround for when user clicks Cancel in FileChooserDialog and
+		// uri is changed without emitting the "selection-changed" signal
 		on_filechooserbutton_selection_changed();
 		if (!gtk_widget_get_sensitive(GTK_WIDGET(gui.button_hash)))
 			return;
+
+		// Single-function hash
+		if (func) {
+			for (int i = 0; i < HASH_FUNCS_N; i++) {
+				if (!hash.funcs[i].supported || i == func->id)
+					continue;
+				hash.funcs[i].enabled = false;
+			}
+		}
 	}
 
 	gui_start_hash();
@@ -484,6 +491,7 @@ static void on_togglebutton_hmac_file_toggled(void)
 
 	bool active = gtk_toggle_button_get_active(gui.togglebutton_hmac_file);
 	gtk_widget_set_sensitive(GTK_WIDGET(gui.entry_hmac_file), active);
+
 	gui_clear_digests();
 
 	gui_update_hash_func_labels(active);
@@ -518,8 +526,8 @@ static void on_entry_hmac_populate_popup(GtkEntry *entry, GtkMenu *menu)
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
-	// Add checkbutton
 	item = gtk_check_menu_item_new_with_mnemonic(_("_Show HMAC Key"));
+	// Add checkbutton
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item),
 		gtk_entry_get_visibility(entry));
 	gtk_widget_show(item);
@@ -601,6 +609,7 @@ void callbacks_init(void)
 	CON(gui.button_stop,                    "clicked",             gui_stop_hash);
 	CON(gui.dialog,                         "delete-event",        G_CALLBACK(on_dialog_delete_event));
 	CON(gui.dialog_button_close,            "clicked",             G_CALLBACK(on_dialog_delete_event));
+	CON(gui.dialog_togglebutton_show_hmac,  "toggled",             gui_update);
 	CON(gui.dialog_combobox,                "changed",             on_dialog_combobox_changed);
 
 	for (int i = 0; i < HASH_FUNCS_N; i++) {
@@ -608,7 +617,9 @@ void callbacks_init(void)
 			continue;
 
 		CON(gui.hash_widgets[i].button, "toggled", gui_update);
-		g_signal_connect_swapped(gui.hash_widgets[i].menuitem_treeview_copy,
+		g_signal_connect(gui.hash_widgets[i].label_file, "clicked",
+			G_CALLBACK(on_button_hash_clicked), &hash.funcs[i]);
+		g_signal_connect(gui.hash_widgets[i].menuitem_treeview_copy,
 			"activate", G_CALLBACK(on_menuitem_treeview_copy_activate),
 			&hash.funcs[i]);
 	}

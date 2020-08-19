@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2007-2017 Tristan Heaven <tristan@tristanheaven.net>
+ *   Copyright (C) 2007-2020 Tristan Heaven <tristan@tristanheaven.net>
  *
  *   This file is part of GtkHash.
  *
@@ -52,9 +52,6 @@
 #if ENABLE_MD6
 	HASH_LIB_DECL(md6)
 #endif
-#if ENABLE_MHASH
-	HASH_LIB_DECL(mhash)
-#endif
 #if ENABLE_NETTLE
 	HASH_LIB_DECL(nettle)
 #endif
@@ -85,9 +82,6 @@ enum hash_lib_e {
 #if ENABLE_MD6
 	HASH_LIB_MD6,
 #endif
-#if ENABLE_MHASH
-	HASH_LIB_MHASH,
-#endif
 #if ENABLE_NETTLE
 	HASH_LIB_NETTLE,
 #endif
@@ -109,14 +103,6 @@ static void gtkhash_hash_lib_init_once(void)
 
 	// Note: Preferred lib selections are defined by the order used here
 	for (enum hash_func_e i = 0; i < HASH_FUNCS_N; i++) {
-#if ENABLE_ZLIB
-		if (!test_lib || (test_lib && strcmp(test_lib, "zlib") == 0)) {
-			if (gtkhash_hash_lib_zlib_is_supported(i)) {
-				hash_libs[i] = HASH_LIB_ZLIB;
-				continue;
-			}
-		}
-#endif
 #if ENABLE_BLAKE2
 		if (!test_lib || (test_lib && strcmp(test_lib, "blake2") == 0)) {
 			if (gtkhash_hash_lib_blake2_is_supported(i)) {
@@ -165,18 +151,18 @@ static void gtkhash_hash_lib_init_once(void)
 			}
 		}
 #endif
-#if ENABLE_GLIB_CHECKSUMS
-		if (!test_lib || (test_lib && strcmp(test_lib, "glib_checksums") == 0)) {
-			if (gtkhash_hash_lib_glib_is_supported(i)) {
-				hash_libs[i] = HASH_LIB_GLIB;
+#if ENABLE_ZLIB
+		if (!test_lib || (test_lib && strcmp(test_lib, "zlib") == 0)) {
+			if (gtkhash_hash_lib_zlib_is_supported(i)) {
+				hash_libs[i] = HASH_LIB_ZLIB;
 				continue;
 			}
 		}
 #endif
-#if ENABLE_MHASH
-		if (!test_lib || (test_lib && strcmp(test_lib, "mhash") == 0)) {
-			if (gtkhash_hash_lib_mhash_is_supported(i)) {
-				hash_libs[i] = HASH_LIB_MHASH;
+#if ENABLE_GLIB_CHECKSUMS
+		if (!test_lib || (test_lib && strcmp(test_lib, "glib_checksums") == 0)) {
+			if (gtkhash_hash_lib_glib_is_supported(i)) {
+				hash_libs[i] = HASH_LIB_GLIB;
 				continue;
 			}
 		}
@@ -231,9 +217,6 @@ void gtkhash_hash_lib_start(struct hash_func_s *func, const uint8_t *hmac_key,
 #if ENABLE_MD6
 		[HASH_LIB_MD6] = gtkhash_hash_lib_md6_start,
 #endif
-#if ENABLE_MHASH
-		[HASH_LIB_MHASH] = gtkhash_hash_lib_mhash_start,
-#endif
 #if ENABLE_NETTLE
 		[HASH_LIB_NETTLE] = gtkhash_hash_lib_nettle_start,
 #endif
@@ -282,9 +265,6 @@ void gtkhash_hash_lib_update(struct hash_func_s *func, const uint8_t *buffer,
 #if ENABLE_MD6
 		[HASH_LIB_MD6] = gtkhash_hash_lib_md6_update,
 #endif
-#if ENABLE_MHASH
-		[HASH_LIB_MHASH] = gtkhash_hash_lib_mhash_update,
-#endif
 #if ENABLE_NETTLE
 		[HASH_LIB_NETTLE] = gtkhash_hash_lib_nettle_update,
 #endif
@@ -325,9 +305,6 @@ void gtkhash_hash_lib_stop(struct hash_func_s *func)
 #endif
 #if ENABLE_MD6
 		[HASH_LIB_MD6] = gtkhash_hash_lib_md6_stop,
-#endif
-#if ENABLE_MHASH
-		[HASH_LIB_MHASH] = gtkhash_hash_lib_mhash_stop,
 #endif
 #if ENABLE_NETTLE
 		[HASH_LIB_NETTLE] = gtkhash_hash_lib_nettle_stop,
@@ -373,9 +350,6 @@ void gtkhash_hash_lib_finish(struct hash_func_s *func)
 #endif
 #if ENABLE_MD6
 		[HASH_LIB_MD6] = gtkhash_hash_lib_md6_finish,
-#endif
-#if ENABLE_MHASH
-		[HASH_LIB_MHASH] = gtkhash_hash_lib_mhash_finish,
 #endif
 #if ENABLE_NETTLE
 		[HASH_LIB_NETTLE] = gtkhash_hash_lib_nettle_finish,

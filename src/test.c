@@ -75,9 +75,11 @@ static void test_hash_func_digest(const enum hash_func_e id, const char *text,
 	gtk_entry_set_text(gui.entry_text, text);
 
 	if (hmac) {
+		gtk_toggle_button_set_active(gui.dialog_togglebutton_show_hmac, true);
 		gtk_toggle_button_set_active(gui.togglebutton_hmac_text, true);
 		gtk_entry_set_text(gui.entry_hmac_text, hmac);
 	} else {
+		gtk_toggle_button_set_active(gui.dialog_togglebutton_show_hmac, false);
 		gtk_toggle_button_set_active(gui.togglebutton_hmac_text, false);
 		gtk_entry_set_text(gui.entry_hmac_text, "");
 	}
@@ -110,12 +112,8 @@ static void test_hash_func(const struct hash_func_s *func)
 	t(BLAKE2BP,   "", "b5ef811a8038f70b628fa8b294daae7492b1ebe343a80eaabbf1f6ae664dd67b9d90b0120791eab81dc96985f28849f6a305186a85501b405114bfa678df9380");
 	t(BLAKE2SP,   "", "dd0e891776933f43c7d032b08a917e25741f8aa9a12c12e1cac8801500f2ca4f");
 	t(CRC32,      "", "00000000");
+	t(CRC32C,     "", "00000000");
 	t(GOST,       "", "ce85b99cc46752fffee35cab9a7b0278abb4c2d2055cff685af4912c49490f8d");
-	t(HAVAL128_3, "", "c68f39913f901f3ddf44c707357a7d70");
-	t(HAVAL160_3, "", "d353c3ae22a25401d257643836d7231a9a95f953");
-	t(HAVAL192_3, "", "e9c48d7903eaf2a91c5b350151efcb175c0fc82de2289a4e");
-	t(HAVAL224_3, "", "c5aae9d47bffcaaf84a8c6e7ccacd60a0dd1932be7b1a192b9214b6d");
-	t(HAVAL256_3, "", "4f6938531f0bc8991f62da7bbd6f7de3fad44562b8c6f4ebf146d5b4e46f7c17");
 	t(MD2,        "", "8350e5a3e24c153df2275c9f80692773");
 	t(MD4,        "", "31d6cfe0d16ae931b73c59d7e0c089c0");
 	t(MD5,        "", "d41d8cd98f00b204e9800998ecf8427e");
@@ -137,12 +135,12 @@ static void test_hash_func(const struct hash_func_s *func)
 	t(SHA3_384,   "", "0c63a75b845e4f7d01107d852e4c2485c51a50aaaa94fc61995e71bbee983a2ac3713831264adb47fb6bd1e058d5f004");
 	t(SHA3_512,   "", "a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26");
 	t(SM3,        "", "1ab21d8355cfa17f8e61194831e81a8f22bec8c728fefb747ed035eb5082aa2b");
-	t(SNEFRU128,  "", "8617f366566a011837f4fb4ba5bedea2");
-	t(SNEFRU256,  "", "8617f366566a011837f4fb4ba5bedea2b892f3ed8b894023d16ae344b2be5881");
 	t(TIGER192,   "", "24f0130c63ac933216166e76b1bb925ff373de2d49584e7a");
 	t(WHIRLPOOL,  "", "19fa61d75522a4669b44e39c1d2e1726c530232130d407f89afee0964997f7a73e83be698b288febcf88e3e03c4f0757ea8964e59b63d93708b138cc42a66eb3");
+	t(XXH64,      "", "ef46db3751d8e999");
 
 	t(CRC32,     "The quick brown fox jumps over the lazy dog", "414fa339");
+	t(CRC32C,    "The quick brown fox jumps over the lazy dog", "22620404");
 	t(BLAKE2B,   "The quick brown fox jumps over the lazy dog", "a8add4bdddfd93e4877d2746e62817b116364a1fa7bc148d95090bc7333b3673f82401cf7aa2e4cb1ecd90296e3f14cb5413f8ed77be73045b13914cdcd6a918");
 	t(GOST,      "The quick brown fox jumps over the lazy dog", "77b7fa410c9ac58a25f49bca7d0468c9296529315eaca76bd1a10f376d1f4294");
 	t(MD2,       "The quick brown fox jumps over the lazy dog", "03d85a0d629d2c442e987525319fc471");
@@ -158,9 +156,8 @@ static void test_hash_func(const struct hash_func_s *func)
 	t(SHA3_256,  "The quick brown fox jumps over the lazy dog", "69070dda01975c8c120c3aada1b282394e7f032fa9cf32f4cb2259a0897dfc04");
 	t(SHA3_384,  "The quick brown fox jumps over the lazy dog", "7063465e08a93bce31cd89d2e3ca8f602498696e253592ed26f07bf7e703cf328581e1471a7ba7ab119b1a9ebdf8be41");
 	t(SHA3_512,  "The quick brown fox jumps over the lazy dog", "01dedd5de4ef14642445ba5f5b97c15e47b9ad931326e4b0727cd94cefc44fff23f07bf543139939b49128caf436dc1bdee54fcb24023a08d9403f9b4bf0d450");
-	t(SNEFRU128, "The quick brown fox jumps over the lazy dog", "59d9539d0dd96d635b5bdbd1395bb86c");
-	t(SNEFRU256, "The quick brown fox jumps over the lazy dog", "674caa75f9d8fd2089856b95e93a4fb42fa6c8702f8980e11d97a142d76cb358");
 	t(WHIRLPOOL, "The quick brown fox jumps over the lazy dog", "b97de512e91e3828b40d2b0fdce9ceb3c4a71f9bea8d88e75c4fa854df36725fd2b52eb6544edcacd6f8beddfea403cb55ae31f03ad62a5ef54e42ee82c3fb35");
+	t(XXH64,     "The quick brown fox jumps over the lazy dog", "0b242d361fda71bc");
 
 	t(RIPEMD128, "message digest", "9e327b3d6e523062afc1132d7df9d1b8");
 	t(RIPEMD160, "message digest", "5d0689ef49d2fae572b881b123a85ffa21595f36");
@@ -172,6 +169,9 @@ static void test_hash_func(const struct hash_func_s *func)
 	t(CRC32,    "abc", "352441c2");
 	t(SM3,      "abc", "66c7f0f462eeedd9d1f2d46bdc10e4e24167c4875cf2f7a2297da02b8f4ba8e0");
 	t(TIGER192, "abc", "f258c1e88414ab2a527ab541ffc5b8bf935f7b951c132951");
+
+	t(CRC32,  "123456789", "cbf43926");
+	t(CRC32C, "123456789", "e3069283");
 
 	t(SM3, "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd", "debe9ff92275b8a138604889c18e5a4d6fdb70e5387e5765293dcba39c0c5732");
 
@@ -478,6 +478,21 @@ static void test_opt_file(void)
 
 		g_assert(gui.view == GUI_VIEW_FILE);
 
+		// Started from cmdline
+		while (!*gtk_entry_get_text(gui.hash_widgets[HASH_FUNC_MD5].entry_file))
+			gtk_main_iteration_do(false);
+		puts(gtk_entry_get_text(gui.hash_widgets[HASH_FUNC_MD5].entry_file));
+
+		// Started from Hash button
+		gtk_button_clicked(gui.button_hash);
+		delay();
+		while (!*gtk_entry_get_text(gui.hash_widgets[HASH_FUNC_MD5].entry_file))
+			gtk_main_iteration_do(false);
+		puts(gtk_entry_get_text(gui.hash_widgets[HASH_FUNC_MD5].entry_file));
+
+		// Started from function label
+		gtk_button_clicked(GTK_BUTTON(gui.hash_widgets[HASH_FUNC_MD5].label_file));
+		delay();
 		while (!*gtk_entry_get_text(gui.hash_widgets[HASH_FUNC_MD5].entry_file))
 			gtk_main_iteration_do(false);
 		puts(gtk_entry_get_text(gui.hash_widgets[HASH_FUNC_MD5].entry_file));
@@ -487,7 +502,10 @@ static void test_opt_file(void)
 
 	g_test_trap_subprocess(NULL, 0, 0);
 	g_test_trap_assert_passed();
-	g_test_trap_assert_stdout("*f1c9645dbc14efddc7d8a322685f26eb*");
+	g_test_trap_assert_stdout(
+		"*f1c9645dbc14efddc7d8a322685f26eb*"
+		"*f1c9645dbc14efddc7d8a322685f26eb*"
+		"*f1c9645dbc14efddc7d8a322685f26eb*");
 }
 
 static void test_opt_file_list(void)

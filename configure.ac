@@ -1,5 +1,6 @@
 AC_PREREQ([2.61])
-AC_INIT([GtkHash], [1.3])
+AC_INIT([GtkHash], [1.4])
+AC_SUBST([RELEASE_DATE], [2020-07-11])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -11,6 +12,13 @@ AC_PROG_CC_C99
 AM_PROG_CC_C_O
 AM_PROG_AR
 LT_INIT
+
+GETTEXT_PACKAGE="${PACKAGE}"
+AC_SUBST([GETTEXT_PACKAGE])
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["${GETTEXT_PACKAGE}"], [Define the gettext package])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.19.7])
+AM_CONDITIONAL([ENABLE_NLS], [test "${enable_nls}" != "no"])
 
 GTKHASH_CFLAGS=""
 
@@ -27,12 +35,19 @@ for opt in \
 	-Wcast-align \
 	-Winit-self \
 	-Wfloat-equal \
+	-Wformat \
+	-Wformat-nonliteral \
+	-Wformat-overflow \
+	-Wformat-security \
+	-Wformat-signedness \
+	-Wformat-truncation \
 	-Wlogical-op \
 	-Wmissing-declarations \
 	-Wmissing-noreturn \
 	-Wredundant-decls \
 	-Wshadow \
 	-Wswitch-default \
+	-Wundef \
 	-Wwrite-strings \
 	-Wno-parentheses-equality
 do
@@ -78,6 +93,20 @@ AC_MSG_RESULT([${with_gtk}])
 PKG_CHECK_MODULES([GTK], ["gtk+-${with_gtk}" >= 3.18])
 AC_SUBST([GTK_CFLAGS])
 AC_SUBST([GTK_LIBS])
+# }}}
+
+# native file chooser option {{{
+AC_MSG_CHECKING([whether to enable native file chooser dialogs])
+AC_ARG_ENABLE([native-file-chooser],
+	[AS_HELP_STRING([--disable-native-file-chooser], [disable native file chooser dialogs])],
+	[enable_native_file_chooser="${enableval}"], [enable_native_file_chooser="yes"])
+AC_MSG_RESULT([${enable_native_file_chooser}])
+
+if test "${enable_native_file_chooser}" = "yes" ; then
+	AC_DEFINE([ENABLE_NATIVE_FILE_CHOOSER], [1], [Native file chooser])
+else
+	AC_DEFINE([ENABLE_NATIVE_FILE_CHOOSER], [0], [Native file chooser])
+fi
 # }}}
 
 # debug option {{{
@@ -230,25 +259,6 @@ if test "${enable_mbedtls}" = "yes" ; then
 	AC_DEFINE([ENABLE_MBEDTLS], [1], [Mbed TLS])
 else
 	AC_DEFINE([ENABLE_MBEDTLS], [0], [Mbed TLS])
-fi
-# }}}
-
-# mhash option {{{
-AC_MSG_CHECKING([whether to use the mhash library])
-AC_ARG_ENABLE([mhash],
-	[AS_HELP_STRING([--enable-mhash], [use the mhash library])],
-	[enable_mhash="${enableval}"], [enable_mhash="no"])
-AC_MSG_RESULT([${enable_mhash}])
-AM_CONDITIONAL([ENABLE_MHASH], [test "${enable_mhash}" = "yes"])
-
-if test "${enable_mhash}" = "yes" ; then
-	AC_CHECK_HEADER([mhash.h], [:], [AC_MSG_ERROR([mhash.h not found])])
-	AC_CHECK_LIB([mhash], [mhash], [:], [AC_MSG_ERROR([mhash library not found])])
-	MHASH_LIBS="-lmhash"
-	AC_SUBST([MHASH_LIBS])
-	AC_DEFINE([ENABLE_MHASH], [1], [mhash])
-else
-	AC_DEFINE([ENABLE_MHASH], [0], [mhash])
 fi
 # }}}
 
@@ -413,23 +423,8 @@ AM_CONDITIONAL([ENABLE_NAUTILUS_DATA], [
 	test "${enable_peony}" = "yes" ||
 	test "${enable_thunar}" = "yes"])
 
-# nls option {{{
-AM_CONDITIONAL([ENABLE_NLS], [test "${enable_nls}" != "no"])
-
-if test "${enable_nls}" != "no" ; then
-	AC_DEFINE([ENABLE_NLS], [1], [Native Language Support])
-	GETTEXT_PACKAGE="${PACKAGE}"
-	AC_SUBST([GETTEXT_PACKAGE])
-	AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["${GETTEXT_PACKAGE}"], [Define the gettext package])
-	IT_PROG_INTLTOOL([0.40.6])
-	AM_GLIB_GNU_GETTEXT
-else
-	AC_DEFINE([ENABLE_NLS], [0], [Native Language Support])
-fi
-# }}}
-
 # Matches preferred order from src/hash/hash-lib.c
-HASH_LIBS="zlib blake2 gcrypt libcrypto mbedtls nettle linux_crypto glib_checksums mhash internal_md6"
+HASH_LIBS="blake2 gcrypt libcrypto mbedtls nettle linux_crypto zlib glib_checksums internal_md6"
 AC_SUBST([HASH_LIBS])
 
 AC_DEFINE_UNQUOTED([G_LOG_DOMAIN], ["${PACKAGE_NAME}"], [Define the Glib log domain])
@@ -439,6 +434,12 @@ AC_DEFINE([HASH_FILE_REPORT_INTERVAL], [166], [Define progress report interval (
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([data/Makefile])
 AC_CONFIG_FILES([data/appdata/Makefile])
+AC_CONFIG_FILES([data/appdata/org.gtkhash.gtkhash.appdata.xml.in])
+AC_CONFIG_FILES([data/appdata/org.gtkhash.caja.metainfo.xml.in])
+AC_CONFIG_FILES([data/appdata/org.gtkhash.nautilus.metainfo.xml.in])
+AC_CONFIG_FILES([data/appdata/org.gtkhash.nemo.metainfo.xml.in])
+AC_CONFIG_FILES([data/appdata/org.gtkhash.peony.metainfo.xml.in])
+AC_CONFIG_FILES([data/appdata/org.gtkhash.thunar.metainfo.xml.in])
 AC_CONFIG_FILES([data/caja/Makefile])
 AC_CONFIG_FILES([data/caja/libgtkhash-properties-caja.caja-extension.in])
 AC_CONFIG_FILES([data/icons/Makefile])
@@ -465,6 +466,7 @@ echo "  gtkhash-thunar:     ${enable_thunar} (thunarx-${with_thunarx})"
 blake2_funcs="
 	BLAKE2b BLAKE2s BLAKE2bp BLAKE2sp"
 gcrypt_funcs="${gcrypt_funcs}
+	CRC32
 	GOST
 	MD4
 	MD5
@@ -492,6 +494,8 @@ libcrypto_funcs="
 	SM3
 	WHIRLPOOL"
 linux_crypto_funcs="
+	BLAKE2b BLAKE2s
+	CRC32C
 	MD4
 	MD5
 	RIPEMD128 RIPEMD160 RIPEMD256 RIPEMD320
@@ -499,7 +503,8 @@ linux_crypto_funcs="
 	SHA224 SHA256 SHA384 SHA512
 	SHA3-224 SHA3-256 SHA3-384 SHA3-512
 	TIGER192
-	WHIRLPOOL"
+	WHIRLPOOL
+	XXH64"
 mbedtls_funcs="
 	MD2
 	MD4
@@ -507,18 +512,6 @@ mbedtls_funcs="
 	RIPEMD160
 	SHA1
 	SHA224 SHA256 SHA384 SHA512"
-mhash_funcs="
-	GOST
-	HAVAL128-3 HAVAL160-3 HAVAL192-3 HAVAL224-3 HAVAL256-3
-	MD2
-	MD4
-	MD5
-	RIPEMD128 RIPEMD160 RIPEMD256 RIPEMD320
-	SHA1
-	SHA224 SHA256 SHA384 SHA512
-	SNEFRU128 SNEFRU256
-	TIGER192
-	WHIRLPOOL"
 nettle_funcs="
 	GOST
 	MD2
@@ -540,9 +533,8 @@ have_libs=""
 for func in \
 	ADLER32 \
 	BLAKE2b BLAKE2s BLAKE2bp BLAKE2sp \
-	CRC32 \
+	CRC32 CRC32C \
 	GOST \
-	HAVAL128-3 HAVAL160-3 HAVAL192-3 HAVAL224-3 HAVAL256-3 \
 	MD2 \
 	MD4 \
 	MD5 \
@@ -553,9 +545,9 @@ for func in \
 	SHA224 SHA256 SHA384 SHA512 \
 	SHA3-224 SHA3-256 SHA3-384 SHA3-512 \
 	SM3 \
-	SNEFRU128 SNEFRU256 \
 	TIGER192 \
-	WHIRLPOOL
+	WHIRLPOOL \
+	XXH64
 do
 	printf "  %-20s" "${func}"
 	enabled=""

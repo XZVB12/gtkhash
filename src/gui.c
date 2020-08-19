@@ -39,7 +39,7 @@
 #include "hash/digest-format.h"
 #include "hash/hash-func.h"
 
-#define GUI_XML_RESOURCE "/org/gtkhash/gtkhash-gtk3.xml"
+#define GUI_XML_RESOURCE "/org/gtkhash/gtkhash-gtk3.ui"
 
 struct gui_s gui = {
 	.view = GUI_VIEW_INVALID,
@@ -186,6 +186,8 @@ static void gui_init_objects(GtkBuilder *builder)
 		"dialog"));
 	gui.dialog_grid = GTK_GRID(gui_get_object(builder,
 		"dialog_grid"));
+	gui.dialog_togglebutton_show_hmac = GTK_TOGGLE_BUTTON(gui_get_object(builder,
+		"dialog_togglebutton_show_hmac"));
 	gui.dialog_combobox = GTK_COMBO_BOX(gui_get_object(builder,
 		"dialog_combobox"));
 	gui.dialog_button_close = GTK_BUTTON(gui_get_object(builder,
@@ -198,12 +200,25 @@ static void gui_init_hash_funcs(void)
 		if (!hash.funcs[i].supported)
 			continue;
 
-		// File/Text view func labels
-		gui.hash_widgets[i].label = GTK_LABEL(gtk_label_new(NULL));
+		// File view func labels
+		gui.hash_widgets[i].label_file = GTK_MODEL_BUTTON(gtk_model_button_new());
+		gtk_button_set_relief(GTK_BUTTON(gui.hash_widgets[i].label_file),
+			GTK_RELIEF_NORMAL);
+		gtk_widget_set_can_focus(GTK_WIDGET(gui.hash_widgets[i].label_file), false);
 		gtk_container_add(GTK_CONTAINER(gui.vbox_outputlabels),
-			GTK_WIDGET(gui.hash_widgets[i].label));
-		gtk_widget_set_halign(GTK_WIDGET(gui.hash_widgets[i].label),
+			GTK_WIDGET(gui.hash_widgets[i].label_file));
+		GValue xalign = G_VALUE_INIT;
+		g_value_init(&xalign, G_TYPE_FLOAT);
+		g_value_set_float(&xalign, 0);
+		g_object_set_property(G_OBJECT(gui.hash_widgets[i].label_file),
+			"xalign", &xalign);
+
+		// Text view func labels
+		gui.hash_widgets[i].label_text = GTK_LABEL(gtk_label_new(NULL));
+		gtk_widget_set_halign(GTK_WIDGET(gui.hash_widgets[i].label_text),
 			GTK_ALIGN_START);
+		gtk_container_add(GTK_CONTAINER(gui.vbox_outputlabels),
+			GTK_WIDGET(gui.hash_widgets[i].label_text));
 
 		// File view digests
 		gui.hash_widgets[i].entry_file = GTK_ENTRY(gtk_entry_new());
@@ -232,13 +247,11 @@ static void gui_init_hash_funcs(void)
 		// Dialog checkbuttons
 		gui.hash_widgets[i].button = GTK_TOGGLE_BUTTON(
 			gtk_check_button_new_with_label(hash.funcs[i].name));
-
 		gtk_grid_attach(gui.dialog_grid,
 			GTK_WIDGET(gui.hash_widgets[i].button),
-			supported % 2 ? 1 : 0, // column
-			supported / 2,         // row
-			1,                     // width
-			1);                    // height
+			supported % 3, // column
+			supported / 3, // row
+			1, 1); // width, height
 
 		// Could be enabled already by cmdline arg
 		if (hash.funcs[i].enabled)
@@ -396,15 +409,14 @@ void gui_run(void)
 	callbacks_init();
 
 	gtk_main();
+
+	hash_file_stop();
+	while (gui_priv.state != GUI_STATE_IDLE)
+		gtk_main_iteration();
 }
 
 void gui_deinit(void)
 {
-	hash_file_stop();
-
-	while (gui_priv.state != GUI_STATE_IDLE)
-		gtk_main_iteration();
-
 	gtk_widget_destroy(GTK_WIDGET(gui.window));
 	g_object_unref(gui.menu_treeview);
 
@@ -546,6 +558,8 @@ void gui_enable_hash_func(const enum hash_func_e id)
 
 void gui_update_hash_func_labels(const bool hmac_enabled)
 {
+	g_assert(gui.view != GUI_VIEW_FILE_LIST);
+
 	for (int i = 0; i < HASH_FUNCS_N; i++) {
 		if (!hash.funcs[i].enabled)
 			continue;
@@ -558,12 +572,16 @@ void gui_update_hash_func_labels(const bool hmac_enabled)
 		else
 			str = g_strdup_printf("%s:", hash.funcs[i].name);
 
-		gtk_label_set_text(gui.hash_widgets[i].label, str);
+		if (gui.view == GUI_VIEW_FILE)
+			gtk_button_set_label(GTK_BUTTON(gui.hash_widgets[i].label_file), str);
+		else
+			gtk_label_set_text(gui.hash_widgets[i].label_text, str);
+
 		g_free(str);
 	}
 }
 
-static void gui_update_hash_funcs(void)
+void gui_update_hash_funcs(void)
 {
 	for (int i = 0; i < HASH_FUNCS_N; i++) {
 		if (!hash.funcs[i].supported)
@@ -572,8 +590,10 @@ static void gui_update_hash_funcs(void)
 		hash.funcs[i].enabled = gtk_toggle_button_get_active(
 			gui.hash_widgets[i].button);
 
-		gtk_widget_set_visible(GTK_WIDGET(gui.hash_widgets[i].label),
-			hash.funcs[i].enabled);
+		gtk_widget_set_visible(GTK_WIDGET(gui.hash_widgets[i].label_file),
+			hash.funcs[i].enabled && gui.view == GUI_VIEW_FILE);
+		gtk_widget_set_visible(GTK_WIDGET(gui.hash_widgets[i].label_text),
+			hash.funcs[i].enabled && gui.view == GUI_VIEW_TEXT);
 		gtk_widget_set_visible(GTK_WIDGET(gui.hash_widgets[i].entry_file),
 			hash.funcs[i].enabled);
 		gtk_widget_set_visible(GTK_WIDGET(gui.hash_widgets[i].entry_text),
@@ -585,26 +605,37 @@ static void gui_update_hash_funcs(void)
 
 static void gui_update_hmac(void)
 {
+	bool enabled = gtk_toggle_button_get_active(gui.dialog_togglebutton_show_hmac);
 	bool active = false;
 
 	switch (gui.view) {
 		case GUI_VIEW_FILE:
 			gtk_widget_hide(GTK_WIDGET(gui.entry_hmac_text));
 			gtk_widget_hide(GTK_WIDGET(gui.togglebutton_hmac_text));
-			gtk_widget_show(GTK_WIDGET(gui.entry_hmac_file));
-			gtk_widget_show(GTK_WIDGET(gui.togglebutton_hmac_file));
+			gtk_widget_set_visible(GTK_WIDGET(gui.entry_hmac_file), enabled);
+			gtk_widget_set_visible(GTK_WIDGET(gui.togglebutton_hmac_file), enabled);
 
 			active = gtk_toggle_button_get_active(gui.togglebutton_hmac_file);
 			gtk_widget_set_sensitive(GTK_WIDGET(gui.entry_hmac_file), active);
+
+			if (active && !enabled) {
+				gtk_toggle_button_set_active(gui.togglebutton_hmac_file, false);
+				active = false;
+			}
 			break;
 		case GUI_VIEW_TEXT:
 			gtk_widget_hide(GTK_WIDGET(gui.entry_hmac_file));
 			gtk_widget_hide(GTK_WIDGET(gui.togglebutton_hmac_file));
-			gtk_widget_show(GTK_WIDGET(gui.entry_hmac_text));
-			gtk_widget_show(GTK_WIDGET(gui.togglebutton_hmac_text));
+			gtk_widget_set_visible(GTK_WIDGET(gui.entry_hmac_text), enabled);
+			gtk_widget_set_visible(GTK_WIDGET(gui.togglebutton_hmac_text), enabled);
 
 			active = gtk_toggle_button_get_active(gui.togglebutton_hmac_text);
 			gtk_widget_set_sensitive(GTK_WIDGET(gui.entry_hmac_text), active);
+
+			if (active && !enabled) {
+				gtk_toggle_button_set_active(gui.togglebutton_hmac_text, false);
+				active = false;
+			}
 			break;
 		default:
 			g_assert_not_reached();
@@ -761,25 +792,11 @@ void gui_check_digests(void)
 		const char *str_out = gtk_entry_get_text(entry);
 		const char *icon_out = NULL;
 
-		switch (format) {
-			case DIGEST_FORMAT_HEX_LOWER:
-			case DIGEST_FORMAT_HEX_UPPER:
-				if (*str_in && (g_ascii_strcasecmp(str_in, str_out) == 0)) {
-					// FIXME: find a real alternative for GTK_STOCK_YES
-					icon_out = "gtk-yes";
-					icon_in = "gtk-yes";
-				}
-				break;
-			case DIGEST_FORMAT_BASE64:
-				if (*str_in && (strcmp(str_in, str_out) == 0)) {
-					icon_out = "gtk-yes";
-					icon_in = "gtk-yes";
-				}
-				break;
-			default:
-				g_assert_not_reached();
+		if (*str_in && gtkhash_digest_format_compare(str_in, str_out, format)) {
+			// FIXME: find a real alternative for GTK_STOCK_YES
+			icon_out = "gtk-yes";
+			icon_in = "gtk-yes";
 		}
-
 		gtk_entry_set_icon_from_icon_name(entry, GTK_ENTRY_ICON_SECONDARY,
 			icon_out);
 	}
@@ -820,6 +837,7 @@ void gui_set_state(const enum gui_state_e state)
 	gtk_widget_set_sensitive(GTK_WIDGET(gui.radiomenuitem_file_list), !busy);
 
 	gtk_widget_set_sensitive(GTK_WIDGET(gui.dialog_grid), !busy);
+	gtk_widget_set_sensitive(GTK_WIDGET(gui.dialog_togglebutton_show_hmac), !busy);
 	gtk_widget_set_sensitive(GTK_WIDGET(gui.dialog_combobox), !busy);
 
 	if (busy)

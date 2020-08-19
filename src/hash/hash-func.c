@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2007-2018 Tristan Heaven <tristan@tristanheaven.net>
+ *   Copyright (C) 2007-2020 Tristan Heaven <tristan@tristanheaven.net>
  *
  *   This file is part of GtkHash.
  *
@@ -40,12 +40,8 @@ static const struct {
 	[HASH_FUNC_BLAKE2S]    = { "BLAKE2s",      32,   0, },
 	[HASH_FUNC_BLAKE2SP]   = { "BLAKE2sp",     32,   0, },
 	[HASH_FUNC_CRC32]      = { "CRC32",         4,   0, },
+	[HASH_FUNC_CRC32C]     = { "CRC32C",        4,   0, },
 	[HASH_FUNC_GOST]       = { "GOST",         32,   0, },
-	[HASH_FUNC_HAVAL128_3] = { "HAVAL128-3",   16,   0, },
-	[HASH_FUNC_HAVAL160_3] = { "HAVAL160-3",   20,   0, },
-	[HASH_FUNC_HAVAL192_3] = { "HAVAL192-3",   24,   0, },
-	[HASH_FUNC_HAVAL224_3] = { "HAVAL224-3",   28,   0, },
-	[HASH_FUNC_HAVAL256_3] = { "HAVAL256-3",   32,   0, },
 	[HASH_FUNC_MD2]        = { "MD2",          16,   0, },
 	[HASH_FUNC_MD4]        = { "MD4",          16,   0, },
 	[HASH_FUNC_MD5]        = { "MD5",          16,  64, },
@@ -68,10 +64,9 @@ static const struct {
 	[HASH_FUNC_SHA3_384]   = { "SHA3-384",     48, 104, },
 	[HASH_FUNC_SHA3_512]   = { "SHA3-512",     64,  72, },
 	[HASH_FUNC_SM3]        = { "SM3",          32,   0, },
-	[HASH_FUNC_SNEFRU128]  = { "SNEFRU128",    16,   0, },
-	[HASH_FUNC_SNEFRU256]  = { "SNEFRU256",    32,   0, },
 	[HASH_FUNC_TIGER192]   = { "TIGER192",     24,   0, },
 	[HASH_FUNC_WHIRLPOOL]  = { "WHIRLPOOL",    64,   0, },
+	[HASH_FUNC_XXH64]      = { "XXH64",         8,   0, },
 };
 
 enum hash_func_e gtkhash_hash_func_get_id_from_name(const char *name)

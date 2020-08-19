@@ -10,14 +10,15 @@ addons:
   apt:
     packages:
       - libtool
-      - intltool
+      - gettext
+      - autopoint
+      - appstream
       - libglib2.0-dev
       - libgtk-3-dev
       - libgcrypt20-dev
       - nettle-dev
       - libb2-dev
       - libmbedtls-dev
-      - libmhash-dev
       - linux-libc-dev
       - librsvg2-bin
       - libxml2-utils
@@ -39,7 +40,6 @@ script:
       --enable-gcrypt
       --enable-glib-checksums
       --enable-mbedtls
-      --enable-mhash
       --enable-nettle
       --enable-linux-crypto
       --enable-nautilus

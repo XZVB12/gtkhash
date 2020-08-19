@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2007-2016 Tristan Heaven <tristan@tristanheaven.net>
+ *   Copyright (C) 2007-2020 Tristan Heaven <tristan@tristanheaven.net>
  *
  *   This file is part of GtkHash.
  *
@@ -29,6 +29,7 @@
 #include "properties-list.h"
 #include "properties-hash.h"
 #include "../hash/hash-func.h"
+#include "../hash/digest-format.h"
 
 enum {
 	COL_ID,
@@ -77,6 +78,24 @@ void gtkhash_properties_list_update_enabled(struct page_s *page,
 	}
 
 	page->funcs[id].enabled = enabled;
+}
+
+void gtkhash_properties_list_reset_enabled(struct page_s *page)
+{
+	GtkTreeModel *model = gtkhash_properties_list_get_model(page);
+	GtkTreeIter iter;
+
+	if (!gtk_tree_model_get_iter_first(model, &iter))
+		return;
+
+	do {
+		int id;
+		gboolean enabled;
+		gtk_tree_model_get(model, &iter, COL_ID, &id, -1);
+		gtk_tree_model_get(model, &iter, COL_ENABLED, &enabled, -1);
+
+		page->funcs[id].enabled = enabled;
+	} while (gtk_tree_model_iter_next(model, &iter));
 }
 
 void gtkhash_properties_list_update_hash_func_names(struct page_s *page)
@@ -144,14 +163,11 @@ void gtkhash_properties_list_check_digests(struct page_s *page)
 			char *digest = NULL;;
 			gtk_tree_model_get(model, &iter, COL_DIGEST, &digest, -1);
 
-			if (g_ascii_strcasecmp(check, digest) == 0) {
-				// FIXME: find a real alternative for GTK_STOCK_YES
+			if (gtkhash_digest_format_compare(check, digest, DIGEST_FORMAT_HEX_LOWER))
 				icon = "gtk-yes";
-				break;
-			}
 
 			g_free(digest);
-		} while (gtk_tree_model_iter_next(model, &iter));
+		} while (!icon && gtk_tree_model_iter_next(model, &iter));
 	}
 
 	gtk_entry_set_icon_from_icon_name(page->entry_check,
@@ -197,6 +213,33 @@ char *gtkhash_properties_list_get_selected_digest(struct page_s *page)
 		g_free(digest);
 		return NULL;
 	}
+}
+
+bool gtkhash_properties_list_hash_selected(struct page_s *page)
+{
+	GtkTreeIter iter;
+	GtkTreeModel *model;
+	if (!gtk_tree_selection_get_selected(page->treeselection, &model, &iter))
+		return false;
+
+	gboolean enabled;
+	gtk_tree_model_get(model, &iter, COL_ENABLED, &enabled, -1);
+	if (!enabled)
+		return false;
+
+	int id;
+	gtk_tree_model_get(model, &iter, COL_ID, &id, -1);
+
+	if (gtk_toggle_button_get_active(page->togglebutton_hmac)) {
+		const uint8_t *hmac_key = (uint8_t *)gtk_entry_get_text(
+			page->entry_hmac);
+		GtkEntryBuffer *buffer = gtk_entry_get_buffer(page->entry_hmac);
+		const size_t key_size = gtk_entry_buffer_get_bytes(buffer);
+		gtkhash_properties_hash_start(page, &page->funcs[id], hmac_key, key_size);
+	} else
+		gtkhash_properties_hash_start(page, &page->funcs[id], NULL, 0);
+
+	return true;
 }
 
 void gtkhash_properties_list_refilter(struct page_s *page)

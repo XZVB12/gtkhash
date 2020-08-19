@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2007-2013 Tristan Heaven <tristan@tristanheaven.net>
+ *   Copyright (C) 2007-2020 Tristan Heaven <tristan@tristanheaven.net>
  *
  *   This file is part of GtkHash.
  *
@@ -20,6 +20,8 @@
 #ifndef GTKHASH_HASH_DIGEST_FORMAT_H
 #define GTKHASH_HASH_DIGEST_FORMAT_H
 
+#include <stdbool.h>
+
 #define DIGEST_FORMATS_N 3
 #define DIGEST_FORMAT_IS_VALID(X) (((X) >= 0) && ((X) < DIGEST_FORMATS_N))
 
@@ -29,5 +31,8 @@ enum digest_format_e {
 	DIGEST_FORMAT_HEX_UPPER,
 	DIGEST_FORMAT_BASE64,
 };
+
+bool gtkhash_digest_format_compare(const char *str1, const char *str2,
+	enum digest_format_e format);
 
 #endif

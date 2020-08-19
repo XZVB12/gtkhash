@@ -290,6 +290,7 @@ typedef struct {
 ** and hex formats (st->hashval and st->hexhashval).
 */
 
+#if 0
 extern int md6_init( md6_state *st,             /* state to initialize */
 		     int d                          /* hash bit length */
 		     );
@@ -310,6 +311,7 @@ extern int md6_update( md6_state *st,             /* initialized state */
 extern int md6_final( md6_state *st,            /* initialized/updated */
 		      unsigned char *hashval       /* output; NULL OK  */
 		      );
+#endif
 
 /* MD6 main interface routines
 **
@@ -406,7 +408,7 @@ extern int md6_full_hash( int d,                    /* hash bit length */
   #error "md6.h Fatal error: md6_n must = md6_b + md6_v + md6_u + md6_k + md6_q."
 #elif ( md6_max_stack_height < 3 )
   #error "md6.h Fatal error: md6_max_stack_height must be at least 3."
-#elif ( md6_r * md6_c + md6_n >= 5000 )
+#elif ( md6_max_r * md6_c + md6_n >= 5000 )
   /* since md6_standard_compress allocates fixed-size array A[5000] */
   #error "md6.h Fatal error: r*c+n must be < 5000."
 #if 0
